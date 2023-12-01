@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.8.34316.72
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebAPIApplication", "WebAPIApplication\WebAPIApplication.csproj", "{1FBFE8E4-9CAD-4C7C-9005-C76F415CF5D4}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DTO", "DTO\DTO.csproj", "{5CA21983-FBFA-4A52-BF5C-0E1FF9ED69F9}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{1FBFE8E4-9CAD-4C7C-9005-C76F415CF5D4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1FBFE8E4-9CAD-4C7C-9005-C76F415CF5D4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1FBFE8E4-9CAD-4C7C-9005-C76F415CF5D4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1FBFE8E4-9CAD-4C7C-9005-C76F415CF5D4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5CA21983-FBFA-4A52-BF5C-0E1FF9ED69F9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5CA21983-FBFA-4A52-BF5C-0E1FF9ED69F9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5CA21983-FBFA-4A52-BF5C-0E1FF9ED69F9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5CA21983-FBFA-4A52-BF5C-0E1FF9ED69F9}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {02F7C093-654B-4C4F-A09C-226FE7AC8DF7}
+	EndGlobalSection
+EndGlobal
