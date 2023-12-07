@@ -15,7 +15,7 @@ namespace WebAPIApplication.Controllers.Account;
 ///     账号管理Controller
 /// </summary>
 [ApiController]
-[Route("api/[controller]")]
+[Route("[controller]/[action]")]
 public class AccountController : ControllerBase
 {
     /// <inheritdoc />
@@ -31,13 +31,13 @@ public class AccountController : ControllerBase
     /// </summary>
     /// <param name="accountRequest"></param>
     /// <returns></returns>
-    [HttpPost("[action]")]
+    [HttpPost]
     [AllowAnonymous]
     public async Task<IActionResult> CreateAccount(CreateAccountRequest accountRequest)
     {
         var password = RsaService.RsaDecrypt(accountRequest.Password);
         if (password is null) return BadRequest(new BaseErrorResponse(new[] { AuthErrorMessages.PassWordError }));
-        if (password.Length is < 8 or > 24)
+        if (password.Length is < 8 or > 16)
             return BadRequest(new BaseErrorResponse(new[] { AuthErrorMessages.PasswordLengthError }));
         var passwordSha256 = password.SHA256();
         var newUser = new User(accountRequest.UserName, passwordSha256, accountRequest.Email);

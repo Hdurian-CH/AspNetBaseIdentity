@@ -22,6 +22,7 @@ public class CustomAuthorizeAttribute : Attribute, IAuthorizationFilter
         var memoryCacheService =
             context.HttpContext.RequestServices.GetKeyedService<ICacheService>("AspMemoryCache") ??
             throw new NullReferenceException();
+        Console.WriteLine(userId);
         if (memoryCacheService.check($"UserTokenInfo:{userId}")) return;
         context.Result = new UnauthorizedResult();
     }

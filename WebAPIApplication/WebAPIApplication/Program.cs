@@ -24,6 +24,16 @@ SnowFlakeNew.SetNumberFormater(new NumberFormater("0123456789abcdefghijklmnopqrs
 #endregion
 
 builder.Services.AddControllers();
+builder.Services.AddCors(options => 
+{
+    options.AddPolicy("AllowOrigin", policy => 
+    {
+        policy.AllowAnyOrigin()
+            .AllowAnyMethod()
+            .AllowAnyHeader()
+            .WithOrigins("http://localhost:7247");
+    });    
+});
 builder.Services.AddAuthDbContext(builder.Configuration);
 builder.Services.AddAuthService(builder.Configuration);
 builder.Services.AddCacheService(builder.Configuration);
@@ -39,7 +49,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
+/*app.UseHttpsRedirection();*/
 
 app.UseAuthorization();
 

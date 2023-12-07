@@ -7,12 +7,15 @@ using DTO.Response.Error;
 using DTO.Response.Secret;
 using Masuit.Tools.Security;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using WebAPIApplication.CustomAttribute.Auth;
 using WebAPIApplication.ErrorMessageDefine.Auth;
 using WebAPIApplication.Services.Auth.Secret;
 using WebAPIApplication.Services.IServices.Auth;
 using WebAPIApplication.Services.IServices.Auth.IUserService;
 using WebAPIApplication.Services.IServices.Cache;
+using ZstdSharp.Unsafe;
 
 namespace WebAPIApplication.Controllers.Auth;
 
@@ -20,7 +23,7 @@ namespace WebAPIApplication.Controllers.Auth;
 ///     用于身份验证的Controller
 /// </summary>
 [ApiController]
-[Route("api/[controller]")]
+[Route("[controller]/[action]")]
 public class AuthController : ControllerBase
 {
     /// <inheritdoc />
@@ -36,7 +39,7 @@ public class AuthController : ControllerBase
     ///     获取RSA公钥
     /// </summary>
     /// <returns></returns>
-    [HttpGet("[action]")]
+    [HttpGet]
     [AllowAnonymous]
     public IActionResult GetPublicKey()
     {
@@ -48,7 +51,7 @@ public class AuthController : ControllerBase
     /// </summary>
     /// <param name="password"></param>
     /// <returns></returns>
-    [HttpPost("[action]")]
+    [HttpPost]
     [AllowAnonymous]
     public IActionResult CalculatePassword(string password)
     {
@@ -60,13 +63,15 @@ public class AuthController : ControllerBase
     /// </summary>
     /// <param name="loginRequest"></param>
     /// <returns></returns>
-    [HttpPost("[action]")]
+    [HttpPost]
     [AllowAnonymous]
     public async Task<IActionResult> Login(LoginRequest loginRequest)
     {
         var password = RsaService.RsaDecrypt(loginRequest.Password);
         if (password is not null)
         {
+            if (password.Length is < 8 or > 16)
+                return BadRequest(new BaseErrorResponse(new[] { AuthErrorMessages.PasswordLengthError }));
             var res = await UserService.CheckUserByUserNameAndPasswordHash(loginRequest.UserName, password.SHA256());
             return res.Match<IActionResult>(
                 normal =>
@@ -76,15 +81,15 @@ public class AuthController : ControllerBase
                         new(ClaimTypes.Name, loginRequest.UserName),
                         new(ClaimTypes.UserData, normal.Item2)
                     };
-                    var token = JwtService.GetToken(authClaims);
+                    var token = new JwtSecurityTokenHandler().WriteToken(JwtService.GetToken(authClaims));
                     MemoryCacheService.Set($"UserTokenInfo:{normal.Item2}", token, DateTime.Now.AddHours(3));
-                    var response = new LoginResponse(token: new JwtSecurityTokenHandler().WriteToken(token));
+                    var response = new LoginResponse(token:token);
                     return Ok(response);
                 },
                 error =>
                 {
-                    var response = new LoginResponse(code: 500, message: error.Item2);
-                    return Ok(response);
+                    var response = new BaseErrorResponse(new []{error.Item2});
+                    return BadRequest(response);
                 }
             );
         }
@@ -98,14 +103,24 @@ public class AuthController : ControllerBase
     /// </summary>
     /// <returns></returns>
     [Authorize]
-    [HttpPost("[action]")]
+    [CustomAuthorize]
+    [HttpPost]
     public IActionResult CheckToken()
     {
         var idClaim = Request.HttpContext.User.Claims.FirstOrDefault(x => x.Type == ClaimTypes.UserData) ??
                       throw new NullReferenceException();
+        var nameClaim = Request.HttpContext.User.Claims.FirstOrDefault(x => x.Type == ClaimTypes.Name) ?? 
+                        throw new NullReferenceException();
         var userId = idClaim.Value;
-        var result = MemoryCacheService.check($"UserTokenInfo:{userId}");
-        return Ok(result ? new BaseResponse() : new BaseResponse(500, "token 过期"));
+        var userName = nameClaim.Value;
+        var authClaims = new List<Claim>
+        {
+            new(ClaimTypes.Name, userName),
+            new(ClaimTypes.UserData, userId)
+        };
+        var token = JwtService.GetToken(authClaims);
+        MemoryCacheService.Set($"UserTokenInfo:{userId}", token, DateTime.Now.AddHours(3));
+        return Ok(new CheckTokenResponse(new JwtSecurityTokenHandler().WriteToken(token)));
     }
 
     #region Field

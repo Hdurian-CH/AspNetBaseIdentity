@@ -3,6 +3,9 @@ using Microsoft.OpenApi.Models;
 
 namespace WebAPIApplication.ServiceCollection.Swagger;
 
+/// <summary>
+///     swagger配置
+/// </summary>
 public static class SwaggerInject
 {
     /// <summary>

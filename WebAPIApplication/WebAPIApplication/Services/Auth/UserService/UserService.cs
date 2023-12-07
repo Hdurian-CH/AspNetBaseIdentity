@@ -10,6 +10,8 @@ using WebAPIApplication.ErrorMessageDefine.DatabaseError;
 using WebAPIApplication.ErrorMessageDefine.UnKnowError;
 using WebAPIApplication.Model.Auth;
 using WebAPIApplication.Services.IServices.Auth.IUserService;
+using WebAPIApplication.Services.IServices.Cache;
+using ZstdSharp.Unsafe;
 
 namespace WebAPIApplication.Services.Auth.UserService;
 
@@ -17,9 +19,10 @@ namespace WebAPIApplication.Services.Auth.UserService;
 ///     用户账号Service
 /// </summary>
 /// <param name="authDb"></param>
-public class UserService(AuthDbContext authDb) : IUserService
+public class UserService(AuthDbContext authDb, [FromKeyedServices("AspMemoryCache")]ICacheService memoryCacheService) : IUserService
 {
     private AuthDbContext AuthDb { get; } = authDb;
+    private ICacheService MemoryCacheService { get; } = memoryCacheService;
 
     /// <summary>
     ///     创建用户
@@ -44,6 +47,7 @@ public class UserService(AuthDbContext authDb) : IUserService
         try
         {
             await AuthDb.SaveChangesAsync();
+            memoryCacheService.Set($"UserInfo:{user.UserName}", user, DateTime.Now.AddHours(6));
             return new True();
         }
         catch (Exception e)
@@ -70,17 +74,23 @@ public class UserService(AuthDbContext authDb) : IUserService
     /// <summary>
     ///     数据库检索用户名以及sha256处理后的密码
     /// </summary>
+    /// <param name="id"></param>
     /// <param name="userName"></param>
     /// <param name="passwordHash"></param>
     /// <returns></returns>
     public async Task<OneOf<(True, string), (False, string)>> CheckUserByUserNameAndPasswordHash(string userName,
         string passwordHash)
     {
-        var user = await AuthDb.Users.FirstOrDefaultAsync(x => x.UserName == userName);
+        var user = memoryCacheService.Get<User>($"UserInfo:{userName}") ??
+                   await AuthDb.Users.FirstOrDefaultAsync(x=>x.UserName == userName);
         if (user is null)
             return (new False(), UserErrorMessages.UserNotExistError);
         if (user.Password != passwordHash)
+        {
+            memoryCacheService.Set($"UserInfo:{userName}", user, DateTime.Now.AddHours(6));
             return (new False(), AuthErrorMessages.PassWordError);
+        }
+        memoryCacheService.Set($"UserInfo:{userName}", user, DateTime.Now.AddHours(6));
         return (new True(), user.UserId);
     }
 }
